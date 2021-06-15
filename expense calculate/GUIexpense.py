@@ -6,9 +6,23 @@ import os
 
 GUI = Tk()
 GUI.title('โปรแกรมคำนวนค่าใช้จ่าย')
-GUI.geometry('850x645')
+# GUI.geometry('850x645')
 GUI.iconbitmap('icons1.ico')
 
+##### ทำให้ GUI อยู่ที่ center ของจอ #####
+
+w = 850
+h = 645
+
+ws = GUI.winfo_screenwidth()
+hs = GUI.winfo_screenheight()
+
+x = (ws/2) - (w/2)
+y = (hs/2) - (h/2)
+
+GUI.geometry('{}x{}+{:.0f}+{:.0f}'.format(w, h, x, y))
+
+#####################################
 FONT1 = (None, 25)
 FONT2 = (None, 18)
 
@@ -79,9 +93,9 @@ def update_table():
     try:
         data = read_csv_treeview()
         for d in data:
-            resulttable.insert('', 0, value=d)
+            resulttable.insert('', 0, value=d) # คือการใส่ข้อมูลลงไปใน treeview 0 คือ ล่างขึ้นบน end คือ บนลงล่าง
             alltransection[d[0]] = d
-        # print(alltransection)
+        print('all', alltransection)
     except:
         print('Not found')
 
@@ -223,6 +237,102 @@ v_result = StringVar()
 v_result.set('---------- ผลลัพธ์ ----------')
 result = Label(F1, textvariable=v_result, font=FONT2, fg='green')  # ถ้าเป็น ttk.Label ใช้ foreground='green' // ถ้า ไม่มี ttk ใช้ fg=''
 result.pack(pady=15)
+
+
+##### Right Click Menu #####
+
+def EditRecord():
+    POPUP = Toplevel() # Toplevel คล้ายๆ Tk() แต่ Tk() จะประกาศได้แค่ครั้งเดียว ฉะนั้นถ้าต้องการหน้าต่างเพิ่มอีกอันต้องใช้ Toplevel()
+    # POPUP.geometry('600x450')
+
+    w = 600
+    h = 450
+
+    ws = GUI.winfo_screenwidth()
+    hs = GUI.winfo_screenheight()
+
+    x = (ws/2) - (w/2)
+    y = (hs/2) - (h/2)
+
+    POPUP.geometry('{}x{}+{:.0f}+{:.0f}'.format(w, h, x, y))
+
+
+    POPUP.title('Edit Record')
+
+    L = Label(POPUP, text='รายการค่าใช้จ่าย', font=FONT1).pack(pady=5)
+
+    v_expense = StringVar()
+    E1 = Entry(POPUP, textvariable=v_expense, font=FONT1)
+    E1.pack()
+
+    L = Label(POPUP, text='ราคา (บาท)', font=FONT1).pack(pady=5)
+
+    v_price = StringVar()
+    E2 = Entry(POPUP, textvariable=v_price, font=FONT1)
+    E2.pack()
+
+    L = Label(POPUP, text='จำนวน', font=FONT1).pack(pady=5)
+
+    v_ea = StringVar()
+    E3 = Entry(POPUP, textvariable=v_ea, font=FONT1)
+    E3.pack()
+
+    def Edit():
+        # print(transectionid)
+        # print(alltransection)
+        olddata = alltransection[transectionid]
+        print('OLD : ', olddata)
+        v1 = v_expense.get()
+        v2 = int(v_price.get())
+        v3 = int(v_ea.get())
+        total = v2 * v3
+        newdata = [olddata[0], olddata[1], v1, v2, v3, total]
+        alltransection[transectionid] = newdata
+
+        UpdateCSV()
+        update_table()
+
+        POPUP.destroy() # ปิด POPUP
+
+
+
+    B1_img = PhotoImage(file='icons8.png').subsample(2)
+
+    B1 = Button(POPUP, text=f'{"Save": >{5}}', command=Edit, image=B1_img, compound='left')
+    B1.pack(ipadx=60, ipady=15, pady=10)
+
+    # get data in select record
+    select = resulttable.selection()
+    print(select)
+    data = resulttable.item(select)
+    data = data['values']
+    print(data)
+    transectionid = str(data[0])
+
+    # ดึงค่าเก่ามาให้ดู
+    v_expense.set(data[2])
+    v_price.set(data[3])
+    v_ea.set(data[4])
+
+
+
+    POPUP.mainloop()
+    
+
+rightclick = Menu(GUI, tearoff=0)
+rightclick.add_command(label='Edit', command=EditRecord)
+rightclick.add_command(label='Delete', command=DeleteRecord)
+
+
+def menupopup(event):
+    # print(event.x_root, event.y_root) # แสดงตำแหน่ง click
+    rightclick.post(event.x_root, event.y_root) # post คือ เอา menu ไปแปะ ที่ตำแหน่งของ event.x_root, event.y_root
+    # event.x_root, event.y_root ใส่ + 1 หรือ ไรเพิ่มเติมได้
+
+resulttable.bind('<Button-2>', menupopup) # <Button-3> คือ click ขวา macOS คือ <Button-2>
+# ถ้าใส่ GUI แทนที่ resulttable จะ click ได้ทั่ว GUI
+##############################
+
 
 update_table()
 GUI.mainloop()
